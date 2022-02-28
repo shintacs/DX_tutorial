@@ -89,18 +89,33 @@ int checkResult() {
 	return result;
 }
 
+void DrawBoard() {
+	int len = 384;
+	int w = 0;
+	int h = 0;
+	unsigned int Cr;
+	Cr = GetColor(0, 0, 0);
+	for (int hi = 0;  hi < len; hi += 48){
+		DrawLine(w, hi, w + len, hi, Cr);
+	}
+	for (int wi = 0; wi < len; wi += 48) {
+		DrawLine(wi, h, wi, h+len, Cr);
+	}
+}
+
 //WinMain
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	int pieces[2];	//駒
-	int back;	//盤の画像番号
+	//int back;	//盤の画像番号
 	int status = 2; //1:プレイ中, 2:TURNメッセージ中, 3:パスメッセージ中, 4:終了
 	int turn = 1;	//1:黒ターン, 2:白ターン
 	SetGraphMode(384, 384, 32);
+	SetBackgroundColor(0, 128, 0);
 	ChangeWindowMode(TRUE);
 	DxLib_Init();
 	SetDrawScreen(DX_SCREEN_BACK);
 	LoadDivGraph("assets/piece.png", 2, 2, 1, 48, 48, pieces);
-	back = LoadGraph("assets/back.png");
+	//back = LoadGraph("assets/back.png");
 	//初期位置
 	board[3][3] = board[4][4] = 1;
 	board[4][3] = board[3][4] = 2;
@@ -134,7 +149,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			}
 			break;
 		}
-		DrawGraph(0, 0, back, FALSE);
+		//DrawGraph(0, 0, back, FALSE);
+		DrawBoard();
 		for (int y = 0; y < 8; y++) for (int x = 0; x < 8; x++) {
 			if (board[y][x]) DrawGraph(x * 48, y * 48, pieces[board[y][x] - 1], TRUE);
 		}
