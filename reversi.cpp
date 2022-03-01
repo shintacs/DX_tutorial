@@ -9,7 +9,7 @@ int msg_wait;
 int putPiece(int x, int y, int turn, bool put_flag) {
 	int sum = 0;
 	if (board[y][x] > 0) return 0;
-	for (int dy = -1; dy <= 1; dy++) for (int dx = -1; dx <= 1; dx++) {
+	for (int dy = -1; dy <= 1; dy++) for (int dx = -1; dx <= 1; dx++) {	//‚W•ûˆÊ‚·‚×‚Ä‚ğŠm”F
 		int wx[8], wy[8];	//— •Ô‚¹‚é‹î‚ÌˆÊ’u‚ğŠi”[
 		for (int wn = 0; ; wn++) {
 			int kx = x + dx * (wn + 1); int ky = y + dy * (wn + 1);
@@ -103,10 +103,6 @@ void DrawBoard() {
 	}
 }
 
-void DrawDisc() {
-
-}
-
 //WinMain
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	//int pieces[2];	//‹î
@@ -128,7 +124,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	setMsg(turn, 0);
 
 	//ƒRƒ}‚Ì•`‰æ—p”z—ñ
-
 	while (!ProcessMessage()) {
 		ClearDrawScreen();
 		switch (status) {
