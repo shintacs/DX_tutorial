@@ -2,11 +2,14 @@
 #include <string>
 
 int board[8][8]; //盤のデータ(0:なし, 1:黒, 2:白)
+int c_board[8][8];	//盤のデータのコピー
 std::string msg;
 int msg_wait;
+int b_place;	//黒が置ける場所の数
+int w_place;	//白が置ける場所の数
 
 //指定した位置に駒を置く
-int putPiece(int x, int y, int turn, bool put_flag) {
+int putPiece(int x, int y, int turn, bool put_flag, int (&board)[8][8]) {
 	int sum = 0;
 	if (board[y][x] > 0) return 0;
 	for (int dy = -1; dy <= 1; dy++) for (int dx = -1; dx <= 1; dx++) {	//８方位すべてを確認
@@ -29,7 +32,7 @@ int putPiece(int x, int y, int turn, bool put_flag) {
 //パスチェック
 bool isPass(int turn) {
 	for (int y = 0; y < 8; y++) for (int x = 0; x < 8; x++) {
-		if (putPiece(x, y, turn, false)) return false;
+		if (putPiece(x, y, turn, false, board)) return false;
 	}
 	return true;
 }
@@ -42,7 +45,7 @@ bool think1(int turn) {
 			mouse_flag = true;
 			int mx, my;
 			GetMousePoint(&mx, &my);
-			if (putPiece(mx / 48, my / 48, turn, true)) return true;
+			if (putPiece(mx / 48, my / 48, turn, true, board)) return true;
 		}
 	}
 	else mouse_flag = false;
@@ -53,13 +56,48 @@ bool think1(int turn) {
 bool think2(int turn) {
 	int max = 0, wx, wy;
 	for (int y = 0; y < 8; y++) for (int x = 0; x < 8; x++) {
-		int num = putPiece(x, y, turn, false);
+		int num = putPiece(x, y, turn, false, board);
 		if (max < num || (max == num && GetRand(1) == 0)) {
 			max = num; wx = x; wy = y;
 		}
 	}
-	putPiece(wx, wy, turn, true);
+	putPiece(wx, wy, turn, true, board);
 	return true;
+}
+
+//盤のコピー
+void copy_board() {
+	for (int i = 0; i < 8; ++i) for (int j = 0; j < 8; ++j) {
+		c_board[i][j] = board[i][j];
+	}
+}
+
+
+//ミニマックスAI
+bool minimax(int turn) {
+	copy_board();
+	b_place = 0;
+	w_place = 0;
+	int pnum = 0;
+	int qnum = 0;
+	int c_pnum = 0;
+	int c_qnum = 0;
+	int best_pnum = 0;
+	int best_qnum = 0;
+	//盤全体を見て、黒（白）が置いた場合に次置ける位置が最も多くなる場所を探す
+	for (int x = 0; x < 8; ++x) for (int y = 0; y < 8; ++y) {
+		if (putPiece(x, y, turn, true, c_board)) {
+			for (int cx = 0; cx < 8; ++cx) for (int cy = 0; cy < 8; ++cy) {
+				if (putPiece(x, y, turn, false, c_board)) pnum++;
+				if (putPiece(x, y, turn^3, false, c_board)) qnum++;
+				//この後、四隅のコマを数えるプログラムを書きたい
+
+			}
+			if (pnum > best_pnum) best_pnum = pnum;
+		}
+			
+	}
+
 }
 
 //メッセージセット
@@ -89,6 +127,7 @@ int checkResult() {
 	return result;
 }
 
+//オセロ盤の描画
 void DrawBoard() {
 	int len = 384;
 	int w = 0;
