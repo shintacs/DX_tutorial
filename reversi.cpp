@@ -1,5 +1,7 @@
 #include "DxLib.h"
 #include <string>
+#include <tuple>
+#include <iostream>
 
 int board[8][8]; //盤のデータ(0:なし, 1:黒, 2:白)
 int c_board[8][8];	//盤のデータのコピー
@@ -75,28 +77,37 @@ void copy_board() {
 
 //ミニマックスAI
 bool minimax(int turn) {
-	copy_board();
-	b_place = 0;
-	w_place = 0;
-	int pnum = 0;
-	int qnum = 0;
-	int c_pnum = 0;
-	int c_qnum = 0;
-	int best_pnum = 0;
-	int best_qnum = 0;
+	int mval = 0;
+	int w1 = 16;
+	int w2 = 4;
+	int corr[2] = {0, 0};	//最大評価値、最大評価のx座標、y座標
 	//盤全体を見て、黒（白）が置いた場合に次置ける位置が最も多くなる場所を探す
 	for (int x = 0; x < 8; ++x) for (int y = 0; y < 8; ++y) {
+		int pnum = 0;	//自駒の数
+		int qnum = 0;	//敵駒の数
+		int c_pnum = 0;	//角の自駒の数
+		int c_qnum = 0;	//角の敵駒の数
+		int val = 0;
+		copy_board();
 		if (putPiece(x, y, turn, true, c_board)) {
-			for (int cx = 0; cx < 8; ++cx) for (int cy = 0; cy < 8; ++cy) {
-				if (putPiece(x, y, turn, false, c_board)) pnum++;
-				if (putPiece(x, y, turn^3, false, c_board)) qnum++;
-				//この後、四隅のコマを数えるプログラムを書きたい
-
+			for (int ix = 0; ix < 8; ++ix) for (int iy = 0; iy < 8; ++iy) {
+				if (putPiece(ix, iy, turn, false, c_board)) pnum++;
+				if (putPiece(ix, iy, turn^3, false, c_board)) qnum++;
 			}
-			if (pnum > best_pnum) best_pnum = pnum;
+			for (int cx = 0; cx < 8; cx += 7) for (int cy = 0; cy < 8; cy += 7) {	//四隅の駒を数える
+				if (c_board[cx][cy] == turn) c_pnum++;
+				else if (c_board[cx][cy] == (turn ^ 3)) c_qnum++;
+			}
+			val = w1 * (c_pnum - c_qnum) + w2 * (pnum - qnum);	//評価値の計算
+			if (val > mval) {	//評価値が最大な場合、更新をする
+				mval = val;
+				corr[0] = x; corr[1] = y;
+			}
 		}
-			
 	}
+	putPiece(corr[0], corr[1], turn, true, board);
+	std::cout << "turn" << std::endl;
+	return true;
 
 }
 
@@ -172,7 +183,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 				status = 3;
 			}
 			else {
-				bool(*think[])(int) = { think1, think2 };
+				bool(*think[])(int) = { think1, minimax };
 				if ((*think[turn - 1])(turn)) {
 					turn = 3 - turn; status = 2;
 					setMsg(turn, 0);
