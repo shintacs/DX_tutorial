@@ -3,19 +3,19 @@
 #include <tuple>
 #include <iostream>
 
-int board[8][8]; //”Õ‚Ìƒf[ƒ^(0:‚È‚µ, 1:•, 2:”’)
-int c_board[8][8];	//”Õ‚Ìƒf[ƒ^‚ÌƒRƒs[
+int board[8][8]; //ç›¤ã®ãƒ‡ãƒ¼ã‚¿(0:ãªã—, 1:é»’, 2:ç™½)
+int c_board[8][8];	//ç›¤ã®ãƒ‡ãƒ¼ã‚¿ã®ã‚³ãƒ”ãƒ¼
 std::string msg;
 int msg_wait;
-int b_place;	//•‚ª’u‚¯‚éêŠ‚Ì”
-int w_place;	//”’‚ª’u‚¯‚éêŠ‚Ì”
+int b_place;	//é»’ãŒç½®ã‘ã‚‹å ´æ‰€ã®æ•°
+int w_place;	//ç™½ãŒç½®ã‘ã‚‹å ´æ‰€ã®æ•°
 
-//w’è‚µ‚½ˆÊ’u‚É‹î‚ğ’u‚­
-int putPiece(int x, int y, int turn, bool put_flag, int (&board)[8][8]) {
+//æŒ‡å®šã—ãŸä½ç½®ã«é§’ã‚’ç½®ã
+int putPiece(int x, int y, int turn, bool put_flag, int(&board)[8][8]) {
 	int sum = 0;
 	if (board[y][x] > 0) return 0;
-	for (int dy = -1; dy <= 1; dy++) for (int dx = -1; dx <= 1; dx++) {	//‚W•ûˆÊ‚·‚×‚Ä‚ğŠm”F
-		int wx[8], wy[8];	//— •Ô‚¹‚é‹î‚ÌˆÊ’u‚ğŠi”[
+	for (int dy = -1; dy <= 1; dy++) for (int dx = -1; dx <= 1; dx++) {	//ï¼˜æ–¹ä½ã™ã¹ã¦ã‚’ç¢ºèª
+		int wx[8], wy[8];	//è£è¿”ã›ã‚‹é§’ã®ä½ç½®ã‚’æ ¼ç´
 		for (int wn = 0; ; wn++) {
 			int kx = x + dx * (wn + 1); int ky = y + dy * (wn + 1);
 			if (kx < 0 || kx > 7 || ky < 0 || ky > 7 || board[ky][kx] == 0) break;
@@ -31,7 +31,7 @@ int putPiece(int x, int y, int turn, bool put_flag, int (&board)[8][8]) {
 	return sum;
 }
 
-//ƒpƒXƒ`ƒFƒbƒN
+//ãƒ‘ã‚¹ãƒã‚§ãƒƒã‚¯
 bool isPass(int turn) {
 	for (int y = 0; y < 8; y++) for (int x = 0; x < 8; x++) {
 		if (putPiece(x, y, turn, false, board)) return false;
@@ -39,7 +39,7 @@ bool isPass(int turn) {
 	return true;
 }
 
-//vlƒ‹[ƒ`ƒ“1 ƒvƒŒƒCƒ„[
+//æ€è€ƒãƒ«ãƒ¼ãƒãƒ³1 ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼
 bool think1(int turn) {
 	static bool mouse_flag = false;
 	if (GetMouseInput() & MOUSE_INPUT_LEFT) {
@@ -54,7 +54,7 @@ bool think1(int turn) {
 	return false;
 }
 
-//vlƒ‹[ƒ`ƒ“2@Å‚à‘½‚­æ‚ê‚é‚Æ‚±‚ë‚É’u‚­
+//æ€è€ƒãƒ«ãƒ¼ãƒãƒ³2ã€€æœ€ã‚‚å¤šãå–ã‚Œã‚‹ã¨ã“ã‚ã«ç½®ã
 bool think2(int turn) {
 	int max = 0, wx, wy;
 	for (int y = 0; y < 8; y++) for (int x = 0; x < 8; x++) {
@@ -67,7 +67,7 @@ bool think2(int turn) {
 	return true;
 }
 
-//”Õ‚ÌƒRƒs[
+//ç›¤ã®ã‚³ãƒ”ãƒ¼
 void copy_board() {
 	for (int i = 0; i < 8; ++i) for (int j = 0; j < 8; ++j) {
 		c_board[i][j] = board[i][j];
@@ -75,54 +75,53 @@ void copy_board() {
 }
 
 
-//ƒ~ƒjƒ}ƒbƒNƒXAI
+//ãƒŸãƒ‹ãƒãƒƒã‚¯ã‚¹AI(2022/3/27æ™‚ç‚¹ã§ã¯æ·±ã•ãŒï¼‘ã—ã‹å‡ºã›ãªã„ã‹ã‚‰ã€ã“ã‚Œã‚’3ãã‚‰ã„ã¾ã§ä¼¸ã°ã—ãŸã„ã¨ã“ã‚ï¼‰
 bool minimax(int turn) {
-	int mval = 0;
+	int mval = -1000;
 	int w1 = 16;
 	int w2 = 4;
-	int corr[2] = {0, 0};	//Å‘å•]‰¿’lAÅ‘å•]‰¿‚ÌxÀ•WAyÀ•W
-	//”Õ‘S‘Ì‚ğŒ©‚ÄA•i”’j‚ª’u‚¢‚½ê‡‚ÉŸ’u‚¯‚éˆÊ’u‚ªÅ‚à‘½‚­‚È‚éêŠ‚ğ’T‚·
+	int corr[2] = { 0, 0 };	//æœ€å¤§è©•ä¾¡å€¤ã€æœ€å¤§è©•ä¾¡ã®xåº§æ¨™ã€yåº§æ¨™
+	//ç›¤å…¨ä½“ã‚’è¦‹ã¦ã€é»’ï¼ˆç™½ï¼‰ãŒç½®ã„ãŸå ´åˆã«æ¬¡ç½®ã‘ã‚‹ä½ç½®ãŒæœ€ã‚‚å¤šããªã‚‹å ´æ‰€ã‚’æ¢ã™
 	for (int x = 0; x < 8; ++x) for (int y = 0; y < 8; ++y) {
-		int pnum = 0;	//©‹î‚Ì”
-		int qnum = 0;	//“G‹î‚Ì”
-		int c_pnum = 0;	//Šp‚Ì©‹î‚Ì”
-		int c_qnum = 0;	//Šp‚Ì“G‹î‚Ì”
-		int val = 0;
+		int pnum = 0;	//è‡ªé§’ãŒç½®ã‘ã‚‹æ•°
+		int qnum = 0;	//æ•µé§’ãŒç½®ã‘ã‚‹æ•°
+		int c_pnum = 0;	//è§’ã®è‡ªé§’ã®æ•°
+		int c_qnum = 0;	//è§’ã®æ•µé§’ã®æ•°
+		int val;
 		copy_board();
 		if (putPiece(x, y, turn, true, c_board)) {
 			for (int ix = 0; ix < 8; ++ix) for (int iy = 0; iy < 8; ++iy) {
 				if (putPiece(ix, iy, turn, false, c_board)) pnum++;
-				if (putPiece(ix, iy, turn^3, false, c_board)) qnum++;
+				if (putPiece(ix, iy, turn ^ 3, false, c_board)) qnum++;
 			}
-			for (int cx = 0; cx < 8; cx += 7) for (int cy = 0; cy < 8; cy += 7) {	//l‹÷‚Ì‹î‚ğ”‚¦‚é
+			for (int cx = 0; cx < 8; cx += 7) for (int cy = 0; cy < 8; cy += 7) {	//å››éš…ã®é§’ã‚’æ•°ãˆã‚‹
 				if (c_board[cx][cy] == turn) c_pnum++;
 				else if (c_board[cx][cy] == (turn ^ 3)) c_qnum++;
 			}
-			val = w1 * (c_pnum - c_qnum) + w2 * (pnum - qnum);	//•]‰¿’l‚ÌŒvZ
-			if (val > mval) {	//•]‰¿’l‚ªÅ‘å‚Èê‡AXV‚ğ‚·‚é
+			val = w1 * (c_pnum - c_qnum) + w2 * (pnum - qnum);	//è©•ä¾¡å€¤ã®è¨ˆç®—
+			if (val >= mval) {	//è©•ä¾¡å€¤ãŒæœ€å¤§ãªå ´åˆã€æ›´æ–°ã‚’ã™ã‚‹
 				mval = val;
 				corr[0] = x; corr[1] = y;
 			}
 		}
 	}
 	putPiece(corr[0], corr[1], turn, true, board);
-	std::cout << "turn" << std::endl;
 	return true;
 
 }
 
-//ƒƒbƒZ[ƒWƒZƒbƒg
+//ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã‚»ãƒƒãƒˆ
 //turn... 1:BLACK, 2:WHITE, 3:DRAW
 //type... 0:TURN 1:PASS 2:WIN
 void setMsg(int turn, int type) {
 	std::string turn_str[] = { "BLACK", "WHITE", "DRAW" };
-	std::string type_str[] = { "TURN", "PASS", "WIN!"};
+	std::string type_str[] = { "TURN", "PASS", "WIN!" };
 	msg = turn_str[turn - 1];
 	if (turn != 3) msg += " " + type_str[type];
 	msg_wait = 50;
 }
 
-//Ÿ”sƒ`ƒFƒbƒN
+//å‹æ•—ãƒã‚§ãƒƒã‚¯
 int checkResult() {
 	int pnum[2] = {};
 	int result = 0;
@@ -138,28 +137,28 @@ int checkResult() {
 	return result;
 }
 
-//ƒIƒZƒ”Õ‚Ì•`‰æ
+//ã‚ªã‚»ãƒ­ç›¤ã®æç”»
 void DrawBoard() {
 	int len = 384;
 	int w = 0;
 	int h = 0;
 	unsigned int Cr;
 	Cr = GetColor(0, 0, 0);
-	for (int hi = 0;  hi < len; hi += 48){
+	for (int hi = 0; hi < len; hi += 48) {
 		DrawLine(w, hi, w + len, hi, Cr);
 	}
 	for (int wi = 0; wi < len; wi += 48) {
-		DrawLine(wi, h, wi, h+len, Cr);
+		DrawLine(wi, h, wi, h + len, Cr);
 	}
 }
 
 //WinMain
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
-	//int pieces[2];	//‹î
-	unsigned int dCr[2] = { GetColor(0, 0, 0), GetColor(255,255,255) };	//ƒfƒBƒXƒN‚ÌF”z—ñ
-	//int back;	//”Õ‚Ì‰æ‘œ”Ô†
-	int status = 2; //1:ƒvƒŒƒC’†, 2:TURNƒƒbƒZ[ƒW’†, 3:ƒpƒXƒƒbƒZ[ƒW’†, 4:I—¹
-	int turn = 1;	//1:•ƒ^[ƒ“, 2:”’ƒ^[ƒ“
+	//int pieces[2];	//é§’
+	unsigned int dCr[2] = { GetColor(0, 0, 0), GetColor(255,255,255) };	//ãƒ‡ã‚£ã‚¹ã‚¯ã®è‰²é…åˆ—
+	//int back;	//ç›¤ã®ç”»åƒç•ªå·
+	int status = 2; //1:ãƒ—ãƒ¬ã‚¤ä¸­, 2:TURNãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ä¸­, 3:ãƒ‘ã‚¹ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ä¸­, 4:çµ‚äº†
+	int turn = 1;	//1:é»’ã‚¿ãƒ¼ãƒ³, 2:ç™½ã‚¿ãƒ¼ãƒ³
 	SetGraphMode(384, 384, 32);
 	SetBackgroundColor(0, 128, 0);
 	ChangeWindowMode(TRUE);
@@ -167,17 +166,17 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	SetDrawScreen(DX_SCREEN_BACK);
 	//LoadDivGraph("assets/piece.png", 2, 2, 1, 48, 48, pieces); 
 	//back = LoadGraph("assets/back.png");
-	
-	//‰ŠúˆÊ’u
+
+	//åˆæœŸä½ç½®
 	board[3][3] = board[4][4] = 1;
 	board[4][3] = board[3][4] = 2;
 	setMsg(turn, 0);
 
-	//ƒRƒ}‚Ì•`‰æ—p”z—ñ
+	//ã‚³ãƒã®æç”»ç”¨é…åˆ—
 	while (!ProcessMessage()) {
 		ClearDrawScreen();
 		switch (status) {
-		case 1:	//ƒpƒX‚Ü‚½‚Ívl‚Ì”»’è
+		case 1:	//ãƒ‘ã‚¹ã¾ãŸã¯æ€è€ƒã®åˆ¤å®š
 			if (isPass(turn)) {
 				setMsg(turn, 1);
 				status = 3;
@@ -191,11 +190,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			}
 			if (checkResult()) status = 4;
 			break;
-		case 2:	//‘Ò‚¿ŠÔ
+		case 2:	//å¾…ã¡æ™‚é–“
 			if (msg_wait > 0) msg_wait--;
 			else status = 1;
 			break;
-		case 3:	//ƒpƒX‚µ‚½ê‡
+		case 3:	//ãƒ‘ã‚¹ã—ãŸå ´åˆ
 			if (msg_wait > 0) msg_wait--;
 			else {
 				turn = 3 - turn; status = 2;
@@ -207,6 +206,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		DrawBoard();
 		for (int y = 0; y < 8; y++) for (int x = 0; x < 8; x++) {
 			if (board[y][x]) DrawCircle(x * 48 + 24, y * 48 + 24, 20, dCr[board[y][x] - 1], TRUE);
+			if (putPiece(x, y, turn, false, board)) {
+				DrawCircle(x * 48 + 24, y * 48 + 24, 20, dCr[1], FALSE);
+			}
 			//DrawGraph(x * 48, y * 48, pieces[board[y][x] - 1], TRUE);
 		}
 		if (status > 1) {
