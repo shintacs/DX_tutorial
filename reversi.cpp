@@ -2,6 +2,9 @@
 #include <string>
 #include <tuple>
 #include <iostream>
+#include <vector>
+
+using namespace std;
 
 int board[8][8]; //盤のデータ(0:なし, 1:黒, 2:白)
 int c_board[8][8];	//盤のデータのコピー
@@ -74,6 +77,27 @@ void copy_board() {
 	}
 }
 
+bool minimax_sub(int turn, int depth) {
+
+	if (depth <= 0) {
+		putPiece(corr[0], corr[1], turn, true, board);
+		return true;
+	}
+	else {
+		minimax(turn, pos);
+		depth--;
+	}
+		
+}
+
+//自駒が置ける場所をリスト化する関数
+vector<vector<int>>  poslist(int (& board)[8][8], int turn) {
+	vector<vector<int>> position;
+	for (int x = 0; x < 8; ++x)for (int y = 0; y < 8; ++y) {
+		if (putPiece(x, y, turn, false, board)) position.push_back({ x, y });
+	}
+	return position;
+}
 
 //ミニマックスAI(2022/3/27時点では深さが１しか出せないから、これを3くらいまで伸ばしたいところ）
 bool minimax(int turn) {
@@ -89,16 +113,17 @@ bool minimax(int turn) {
 		int c_qnum = 0;	//角の敵駒の数
 		int val;
 		copy_board();
+
 		if (putPiece(x, y, turn, true, c_board)) {
-			for (int ix = 0; ix < 8; ++ix) for (int iy = 0; iy < 8; ++iy) {
-				if (putPiece(ix, iy, turn, false, c_board)) pnum++;
-				if (putPiece(ix, iy, turn ^ 3, false, c_board)) qnum++;
-			}
+			pnum = poslist(c_board, turn).size();
+			qnum = poslist(c_board, turn^3).size();
+
 			for (int cx = 0; cx < 8; cx += 7) for (int cy = 0; cy < 8; cy += 7) {	//四隅の駒を数える
 				if (c_board[cx][cy] == turn) c_pnum++;
 				else if (c_board[cx][cy] == (turn ^ 3)) c_qnum++;
 			}
 			val = w1 * (c_pnum - c_qnum) + w2 * (pnum - qnum);	//評価値の計算
+
 			if (val >= mval) {	//評価値が最大な場合、更新をする
 				mval = val;
 				corr[0] = x; corr[1] = y;
@@ -107,7 +132,6 @@ bool minimax(int turn) {
 	}
 	putPiece(corr[0], corr[1], turn, true, board);
 	return true;
-
 }
 
 //メッセージセット
